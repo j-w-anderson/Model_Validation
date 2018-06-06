@@ -24,5 +24,10 @@ namespace Model_Validation
         {
             InitializeComponent();
         }
+
+        private void Load_Pat_bn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

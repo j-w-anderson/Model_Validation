@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Model_Validation"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="Compare Beam Data" Height="600" Width="800">
     <DockPanel>
-        <Label Content="Calculed Verification Data" DockPanel.Dock="Top" FontWeight="Bold" FontSize="20"/>
-        <Grid Margin="3">
+        <TextBlock Text="Calculated Verification Data" DockPanel.Dock="Top" FontWeight="Bold" FontSize="20" Margin="3"/>
+        <Grid DockPanel.Dock="Top" Margin="3">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -25,7 +25,14 @@
             <TextBox Name="Pat_ID_tb" Grid.Column="1" Grid.Row="0" Width="120" FontSize="10" Margin="3"/>
             <ComboBox Name="Course_cb" Grid.Column="1" Grid.Row="1" Width="120" FontSize="10" Margin="3"/>
             <ComboBox Name="Plan_cb" Grid.Column="3" Grid.Row="1" Width="120" FontSize="10" Margin="3"/>
-            <Button Name="Load_Pat_bn" Grid.Column="2" Grid.Row="0" Grid.ColumnSpan="2" Margin="3" Content="Load Patient"/>
+            <Button Name="Load_Pat_bn" Grid.Column="2" Grid.Row="0" Grid.ColumnSpan="2" Margin="3" Content="Load Patient" Click="Load_Pat_bn_Click" />
         </Grid>
+        <TextBlock Text="Measured Scans"  FontWeight="Bold" FontSize="20" Margin="3" DockPanel.Dock="Top"/>
+        <Button Content="Find W2CAD Scan" DockPanel.Dock="Left" Width="120" Height="20" Margin="3" VerticalAlignment="Top"/>
+        <Border BorderBrush="black" BorderThickness="2">
+            <ScrollViewer DockPanel.Dock="Right" Margin="5">
+                <StackPanel Name="prevScans_sp" Margin="3"/>
+            </ScrollViewer>
+        </Border>
     </DockPanel>
 </Window>
