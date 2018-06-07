@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Model_Validation"
         mc:Ignorable="d"
-        Title="Compare Beam Data" Height="600" Width="800"
+        Title="Compare Beam Data" Height="700" Width="800"
         Closing="Window_Closing">
     <DockPanel>
         <TextBlock Text="Calculated Verification Data" DockPanel.Dock="Top" FontWeight="Bold" FontSize="20" Margin="3"/>
@@ -30,11 +30,27 @@
         </Grid>
         <TextBlock Name="Status_tb" FontSize=" 12" Margin="0" DockPanel.Dock="Bottom" Background="#FF94E4B1"/>
         <TextBlock Text="Measured Scans"  FontWeight="Bold" FontSize="20" Margin="3" DockPanel.Dock="Top"/>
-        <Button Name="getScan_btn" Content="Find W2CAD Scan" DockPanel.Dock="Left" Width="120" Height="20" Margin="3,-2,3,0" VerticalAlignment="Top" Click="getScan_btn_Click"/>
-        <Border BorderBrush="black" BorderThickness="2" DockPanel.Dock="Right">
-            <ScrollViewer Margin="5">
-                <StackPanel Name="prevScans_sp" Margin="3"/>
-            </ScrollViewer>
-        </Border>
+        <DockPanel DockPanel.Dock="Top">
+            <Button Name="getScan_btn" Content="Find W2CAD Scan" DockPanel.Dock="Left" Width="120" Height="20" Margin="3" VerticalAlignment="Top" Click="getScan_btn_Click"/>
+            <Border BorderBrush="black" BorderThickness="2" DockPanel.Dock="Top" Height="200" Margin="3">
+                <ScrollViewer Margin="5">
+                    <StackPanel Name="prevScans_sp" Margin="3"/>
+                </ScrollViewer>
+            </Border>
+        </DockPanel>
+        <!--Comparison tool-->
+        <DockPanel DockPanel.Dock="Top">
+            <Button Name="compare_btn"  Content="Compare Scans" DockPanel.Dock="Left" Width="120" Height="20"  Margin="3" VerticalAlignment="Top" Click="compare_btn_Click"/>
+            <DockPanel DockPanel.Dock="Bottom">
+                <Button DockPanel.Dock="Left" Name="prev_btn" Width="50" Height="20" Click="prev_btn_Click" Content="&lt;" Margin="3"/>
+                <TextBlock DockPanel.Dock="Left" Text="Change Scan" Height="20" Margin="3"/>
+                <Button DockPanel.Dock="Left" Name="next_btn" Width="50" Height="20" Click="next_btn_Click"  Content="&gt;" Margin="3"/>
+                <TextBlock Name="scan_tb" Margin="3" Text=""></TextBlock>
+            </DockPanel>
+            <Border BorderBrush="black" BorderThickness="2"  Margin="3">
+                <Canvas Name="scan_cnv" Margin="3"/>
+            </Border>
+
+        </DockPanel>
     </DockPanel>
 </Window>

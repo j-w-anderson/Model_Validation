@@ -184,5 +184,20 @@ namespace Model_Validation
                 scan_data = new List<Tuple<double, double>>();
             }
         }
+
+        private void compare_btn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void prev_btn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void next_btn_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
