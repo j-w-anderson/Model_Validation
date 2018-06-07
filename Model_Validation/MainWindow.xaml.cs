@@ -80,7 +80,21 @@ namespace Model_Validation
 
         private void Plan_cb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (Plan_cb.SelectedIndex == -1)
+            {
+                Analyze_btn.IsEnabled = false;
+                return;
+            }
+            if (ds_list.Count > 0)
+            {
+                Analyze_btn.IsEnabled = true;
+            }
 
+            PlanSetup plan = c.PlanSetups.Single(x => x.Id == Plan_cb.SelectedItem.ToString());
+            foreach(Beam beam in plan.Beams.Where(x=>)
+            {
+
+            }
         }
 
         private void getScan_btn_Click(object sender, RoutedEventArgs e)
@@ -99,7 +113,7 @@ namespace Model_Validation
                 Regex step_re = new Regex("^%STEP");
                 Regex depth_re = new Regex("^%DPTH");
                 Regex data_re = new Regex("^<");
-                
+
                 foreach (string line in File.ReadAllLines(ofd.FileName))
                 {
                     if (newscan_re.IsMatch(line))
@@ -116,7 +130,7 @@ namespace Model_Validation
                     }
                     else if (scantype_re.IsMatch(line))
                     {
-                        switch(line.Split(' ').Last())
+                        switch (line.Split(' ').Last())
                         {
                             case "OPP":
                                 ds_list.Last().axisDir = "X";
@@ -151,7 +165,7 @@ namespace Model_Validation
                     }
                 }
                 prevScans_sp.Children.Clear();
-                foreach(DataScan ds in ds_list)
+                foreach (DataScan ds in ds_list)
                 {
                     Label lbl = new Label();
                     string scan_type = ds.axisDir == "X" ? "Profile" : "PDD";
@@ -160,7 +174,10 @@ namespace Model_Validation
                         scan_type, ds.FieldX, ds.FieldY, depth_type);
                     prevScans_sp.Children.Add(lbl);
                 }
+
             }
+            Analyze_btn.IsEnabled = ds_list.Count > 0 && Plan_cb.SelectedIndex != -1;
+                
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -183,6 +200,11 @@ namespace Model_Validation
             {
                 scan_data = new List<Tuple<double, double>>();
             }
+        }
+
+        private void Analyze_btn_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

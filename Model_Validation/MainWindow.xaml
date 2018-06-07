@@ -28,9 +28,15 @@
             <ComboBox Name="Plan_cb" Grid.Column="3" Grid.Row="1" Width="120" FontSize="10" Margin="3" SelectionChanged="Plan_cb_SelectionChanged"/>
             <Button Name="Load_Pat_bn" Grid.Column="2" Grid.Row="0" Grid.ColumnSpan="2" Margin="3" Content="Load Patient" Click="Load_Pat_bn_Click" />
         </Grid>
+        <Border BorderBrush="black" BorderThickness="2" DockPanel.Dock="Top">
+            <ScrollViewer Margin="5">
+                <StackPanel Name="beams_sp" Margin="3" Height="100"/>
+            </ScrollViewer>
+        </Border>
         <TextBlock Name="Status_tb" FontSize=" 12" Margin="0" DockPanel.Dock="Bottom" Background="#FF94E4B1"/>
         <TextBlock Text="Measured Scans"  FontWeight="Bold" FontSize="20" Margin="3" DockPanel.Dock="Top"/>
         <Button Name="getScan_btn" Content="Find W2CAD Scan" DockPanel.Dock="Left" Width="120" Height="20" Margin="3,-2,3,0" VerticalAlignment="Top" Click="getScan_btn_Click"/>
+        <Button Name="Analyze_btn" Content="Analyze" DockPanel.Dock="Bottom" HorizontalAlignment="Right" Width="120" Height="20" Margin="3" IsEnabled="False" Click="Analyze_btn_Click"/>
         <Border BorderBrush="black" BorderThickness="2" DockPanel.Dock="Right">
             <ScrollViewer Margin="5">
                 <StackPanel Name="prevScans_sp" Margin="3"/>
