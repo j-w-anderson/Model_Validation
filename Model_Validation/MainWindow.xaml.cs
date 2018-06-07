@@ -188,74 +188,79 @@ namespace Model_Validation
         }
 
         int scan_num = 0;
-        private void compare_btn_Click(object sender, RoutedEventArgs e)
+        private bool compare_btn_Click(object sender, RoutedEventArgs e)
         {
             Status_tb.Text = "";
-            if (Plan_cb.SelectedIndex == -1 || ds_list.Count() == 0) { return; }
+            if (Plan_cb.SelectedIndex == -1) { return "No plan loaded"; }
+            if (ds_list.Count() == 0) { return "No Dataset loaded"; }
             PlanSetup ps = c.PlanSetups.Single(x => x.Id == Plan_cb.SelectedItem.ToString());
-            List<ScanCompare> sc = new List<ScanCompare>();
             bool scan_found = false;
             int ds_num = 0;
+
+            //Step through each datascan & beam combination until we reach the Xth valid pair, where X is scan_num
             foreach (DataScan ds in ds_list)
             {
                 if (scan_found) { break; }
-                //sc.Clear();
                 bool prof = ds.axisDir == "X";
-                //find the field for this scan
-                Beam beam = null;
-                foreach (Beam b in ps.Beams)
+                //find each field for this scan
+                foreach (Beam beam in ps.Beams)
                 {
-                    double x1 = b.ControlPoints.First().JawPositions.X1;
-                    double x2 = b.ControlPoints.First().JawPositions.X2;
-                    double y1 = b.ControlPoints.First().JawPositions.Y1;
-                    double y2 = b.ControlPoints.First().JawPositions.Y2;
+                    double x1 = beam.ControlPoints.First().JawPositions.X1;
+                    double x2 = beam.ControlPoints.First().JawPositions.X2;
+                    double y1 = beam.ControlPoints.First().JawPositions.Y1;
+                    double y2 = beam.ControlPoints.First().JawPositions.Y2;
                     double xjaw = Math.Abs(x1 - x2);
                     double yjaw = Math.Abs(y1 - y2);
                     if (xjaw - ds.FieldX < 0.1 && yjaw - ds.FieldY < 0.1)
                     {
-                        beam = b;
-                        break;
-                    }
-                }
-                if (beam != null)
-                {
-                    if (scan_num == ds_num)
-                    {
-                        scan_found = true;
-                        scan_tb.Text = $"Comparing Scan ({ds.FieldX}x{ds.FieldY})-({ds.depth}).";
-                        sc.Clear();
-                    }
-                    //get dose profile
-                    VVector start = new VVector();
-                    start.x = prof ? ds.scan_data.First().Item1 : 0;
-                    start.y = prof ? ds.depth - 200 : ds.scan_data.First().Item1 - 200;
-                    start.z = 0;//no inline scans
-                    VVector end = new VVector();
-                    end.x = prof ? ds.scan_data.Last().Item1 : 0;
-                    end.y = prof ? start.y : ds.scan_data.Last().Item1 - 200;
-                    double[] size = new double[ds.scanLength];
-                    DoseProfile dp = beam.Dose.GetDoseProfile(start, end, size);
-                    double norm_factor = prof ? dp.First(o => o.Position.x >= 0).Value : dp.Max(o => o.Value);
-                    for (int i = 0; i < dp.Count(); i++)
-                    {
-                        sc.Add(new ScanCompare
+                        // beam found
+                        if (ds_num == scan_num)
                         {
-                            measured_pos = ds.scan_data[i].Item1,
-                            measured_dos = ds.scan_data[i].Item2,
-                            calc_pos = prof ? dp[i].Position.x : dp[i].Position.y + 200,
-                            calc_dos = dp[i].Value / norm_factor * 100
-                        });
-                        sc.Last().gamma = GetGamma(ds, dp, i, norm_factor, prof);
+                            loadComparision(beam, ds, prof);
+                            return true;
+                        }
+                        ds_num++;
                     }
-
                 }
-                ds_num++;
             }
-            if (!scan_found) { Status_tb.Text = "No matching scans/field pairs found."; return; }
+            return false;
+        }
+
+        private void loadComparision(Beam beam, DataScan ds, bool prof)
+        {
+            if (beam == null) { return; }
+
+            scan_tb.Text = $"Comparing Scan ({ds.FieldX}x{ds.FieldY})-({ds.depth}).";
+            List<ScanCompare> sc = new List<ScanCompare>();
+
+            //get dose profile
+            VVector start = new VVector();
+            start.x = prof ? ds.scan_data.First().Item1 : 0;
+            start.y = prof ? ds.depth - 200 : ds.scan_data.First().Item1 - 200;
+            start.z = 0;//no inline scans
+            VVector end = new VVector();
+            end.x = prof ? ds.scan_data.Last().Item1 : 0;
+            end.y = prof ? start.y : ds.scan_data.Last().Item1 - 200;
+            double[] size = new double[ds.scanLength];
+            DoseProfile dp = beam.Dose.GetDoseProfile(start, end, size);
+            double norm_factor = prof ? dp.First(o => o.Position.x >= 0).Value : dp.Max(o => o.Value);
+            for (int i = 0; i < dp.Count(); i++)
+            {
+                sc.Add(new ScanCompare
+                {
+                    measured_pos = ds.scan_data[i].Item1,
+                    measured_dos = ds.scan_data[i].Item2,
+                    calc_pos = prof ? dp[i].Position.x : dp[i].Position.y + 200,
+                    calc_dos = dp[i].Value / norm_factor * 100
+                });
+                sc.Last().gamma = GetGamma(ds, dp, i, norm_factor, prof);
+            }
+
             scan_cnv.Children.Clear();
             plot_scans(sc);
-
         }
+
+
 
 
         private double GetGamma(DataScan ds, DoseProfile dp, int i, double norm_factor, bool prof)
@@ -315,8 +320,8 @@ namespace Model_Validation
                 var line1 = new Line() { Stroke = Brushes.Blue, StrokeThickness = 2.0 };
 
                 // Set line coordinates
-                line1.X1 = (sc[i].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
-                line1.X2 = (sc[i + 1].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+                line1.X1 = (sc[i].measured_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+                line1.X2 = (sc[i + 1].measured_pos - sc.Min(o => o.measured_pos)) * xCoeff;
 
                 // Y axis start point is top-left corner of window, convert it to bottom-left.
                 line1.Y1 = scan_cnv.ActualHeight - sc[i].measured_dos * yCoeff;
@@ -358,15 +363,18 @@ namespace Model_Validation
         }
         private void prev_btn_Click(object sender, RoutedEventArgs e)
         {
-            scan_num = (scan_num - 1) % ds_list.Count();
+            if(scan_num==0) { return; }
+            scan_num -= 1;
             compare_btn_Click(null, null);
         }
 
         private void next_btn_Click(object sender, RoutedEventArgs e)
         {
-
-            scan_num = (scan_num + 1) % ds_list.Count();
-            compare_btn_Click(null, null);
+            scan_num = (scan_num + 1);
+            if (compare_btn_Click(null, null) == false)
+            {
+                Status_tb.Text = "No more scans";
+            }
         }
     }
 }
