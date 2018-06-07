@@ -235,16 +235,51 @@ namespace Model_Validation
                         sc.Add(new ScanCompare
                         {
                             measured_pos = ds.scan_data[i].Item1,
-                            measured_dose = ds.scan_data[i].Item2,
+                            measured_dos = ds.scan_data[i].Item2,
                             calc_pos = prof ? dp[i].Position.x : dp[i].Position.y + 200,
                             calc_dos = dp[i].Value / norm_factor * 100
                         });
+                        sc.Last().gamma = GetGamma(ds, dp, i, norm_factor, prof);
                     }
 
                 }
                 ds_num++;
             }
             if (!scan_found) { Status_tb.Text = "No matching scans/field pairs found."; }
+        }
+
+        private double GetGamma(DataScan ds, DoseProfile dp, int i, double norm_factor, bool prof)
+        {
+            double dd = 2;//%
+            double dta = 2;//mm
+            double ref_pos = ds.scan_data[i].Item1;
+            double ref_dos = ds.scan_data[i].Item2;
+            int start = (int)Math.Max(0, i - 10 * dta);
+            int stop = (int)Math.Min(ds.scan_data.Count()-1, i + 10 * dta);
+            List<double> gamma_values = new List<double>();
+            for(double index = start; index < stop - 1; index += 0.1)
+            {
+                //y = y0 + (x-x0) * (y1-y0)/(x1-x0)
+                int x0 = (int)Math.Floor(index);
+                int x1 = (int)Math.Ceiling(index);
+                double yp0 = prof ? dp[x0].Position.x : dp[x0].Position.y + 200;
+                double yp1 = prof ? dp[x1].Position.x : dp[x1].Position.y + 200;
+                double yd0 = dp[x0].Value / norm_factor * 100;
+                double yd1 = dp[x1].Value / norm_factor * 100;
+                double dos = 0; double pos = 0;
+                if (x0 == x1) {
+                    dos = yd0;
+                    ref_pos = yp0;
+                }
+                else
+                {
+                    dos = yd0 + (index - x0) * (yd1 - yd0) / (x1 - x0);
+                    pos = yp0 + (index - x0) * (yp1 - yp0) / (x1 - x0);
+                }
+                double gamma = Math.Sqrt(Math.Pow((ref_pos - ref_pos) / dta, 2) + Math.Pow((dos - ref_dos) / dd, 2));
+                gamma_values.Add(gamma);
+            }
+            return gamma_values.Min();
         }
 
         private void prev_btn_Click(object sender, RoutedEventArgs e)
