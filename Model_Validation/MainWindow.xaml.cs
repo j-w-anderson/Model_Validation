@@ -190,17 +190,18 @@ namespace Model_Validation
         int scan_num = 0;
         private void compare_btn_Click(object sender, RoutedEventArgs e)
         {
-            Status_tb.Text = "";
+            Status_tb.Text = "Loading scan...";
             if (Plan_cb.SelectedIndex == -1 || ds_list.Count() == 0) { return; }
             PlanSetup ps = c.PlanSetups.Single(x => x.Id == Plan_cb.SelectedItem.ToString());
             List<ScanCompare> sc = new List<ScanCompare>();
             bool scan_found = false;
             int ds_num = 0;
+            bool prof=false;
             foreach (DataScan ds in ds_list)
             {
                 if (scan_found) { break; }
                 //sc.Clear();
-                bool prof = ds.axisDir == "X";
+                prof = ds.axisDir == "X";
                 //find the field for this scan
                 Beam beam = null;
                 foreach (Beam b in ps.Beams)
@@ -210,11 +211,10 @@ namespace Model_Validation
                     double y1 = b.ControlPoints.First().JawPositions.Y1;
                     double y2 = b.ControlPoints.First().JawPositions.Y2;
                     double xjaw = Math.Abs(x1 - x2);
-                    double yjaw = Math.Abs(y1 - y2);
-                    if (xjaw - ds.FieldX < 0.1 && yjaw - ds.FieldY < 0.1)
+                    double yjaw = Math.Abs(y1 - y2); ;
+                    if (Math.Abs(xjaw - ds.FieldX) < 0.1 && Math.Abs(yjaw - ds.FieldY) < 0.1)
                     {
                         beam = b;
-                        break;
                     }
                 }
                 if (beam != null)
@@ -253,8 +253,8 @@ namespace Model_Validation
             }
             if (!scan_found) { Status_tb.Text = "No matching scans/field pairs found."; return; }
             scan_cnv.Children.Clear();
-            plot_scans(sc);
-
+            plot_scans(sc,prof);
+            Status_tb.Text = "Scan loaded.";
         }
 
 
@@ -280,7 +280,7 @@ namespace Model_Validation
                 if (x0 == x1)
                 {
                     dos = yd0;
-                    ref_pos = yp0;
+                    pos = yp0;
                 }
                 else
                 {
@@ -293,13 +293,13 @@ namespace Model_Validation
             return gamma_values.Min();
         }
 
-        private void plot_scans(List<ScanCompare> sc)
+        private void plot_scans(List<ScanCompare> sc, bool prof)
         {
 
             // Calculate multipliers for scaling DVH to canvas.
             //.DoseValuePresentation = DoseValuePresentation.Absolute;
 
-            double xCoeff = scan_cnv.ActualWidth / (sc.Max(o => o.measured_pos) * 2);
+            double xCoeff = scan_cnv.ActualWidth / (sc.Max(o => o.measured_pos) * (prof?2:1));
             double yCoeff = scan_cnv.ActualHeight / (sc.Max(o => o.measured_dos));
             double xCoeff_gamma = xCoeff;
             double yCoeff_gamma = scan_cnv.ActualHeight / sc.Max(o => o.gamma);
