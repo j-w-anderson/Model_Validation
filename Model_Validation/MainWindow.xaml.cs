@@ -59,7 +59,7 @@ namespace Model_Validation
             //if(pat == null) { throw new Exception("Valid ID but patient not loaded"); }
             //Course_cb.ItemsSource = new string[] { };
             Plan_cb.ItemsSource = new string[] { };
-            Course_cb.ItemsSource = pat.Courses.Select(x=>x.Id);
+            Course_cb.ItemsSource = pat.Courses.Select(x => x.Id);
             Status_tb.Text = $"Patient id \"{Pat_ID_tb.Text}\" loaded.";
         }
 
@@ -97,11 +97,11 @@ namespace Model_Validation
                 Regex newscan_re = new Regex("^\\$STOM");
                 Regex fieldsize_re = new Regex("^%FLSZ");
                 Regex scantype_re = new Regex("^%TYPE");
-               Regex pnts_re = new Regex("^%PNTS");
+                Regex pnts_re = new Regex("^%PNTS");
                 Regex step_re = new Regex("^%STEP");
                 Regex depth_re = new Regex("^%DPTH");
                 Regex data_re = new Regex("^<");
-                
+
                 foreach (string line in File.ReadAllLines(ofd.FileName))
                 {
                     if (newscan_re.IsMatch(line))
@@ -118,7 +118,7 @@ namespace Model_Validation
                     }
                     else if (scantype_re.IsMatch(line))
                     {
-                        switch(line.Split(' ').Last())
+                        switch (line.Split(' ').Last())
                         {
                             case "OPP":
                                 ds_list.Last().axisDir = "X";
@@ -153,7 +153,7 @@ namespace Model_Validation
                     }
                 }
                 prevScans_sp.Children.Clear();
-                foreach(DataScan ds in ds_list)
+                foreach (DataScan ds in ds_list)
                 {
                     Label lbl = new Label();
                     string scan_type = ds.axisDir == "X" ? "Profile" : "PDD";
@@ -191,18 +191,19 @@ namespace Model_Validation
         private void compare_btn_Click(object sender, RoutedEventArgs e)
         {
             Status_tb.Text = "";
-            if (Plan_cb.SelectedIndex == -1 || ds_list.Count()==0) { return; }
+            if (Plan_cb.SelectedIndex == -1 || ds_list.Count() == 0) { return; }
             PlanSetup ps = c.PlanSetups.Single(x => x.Id == Plan_cb.SelectedItem.ToString());
             List<ScanCompare> sc = new List<ScanCompare>();
             bool scan_found = false;
             int ds_num = 0;
-            foreach(DataScan ds in ds_list)
+            foreach (DataScan ds in ds_list)
             {
                 if (scan_found) { break; }
+                //sc.Clear();
                 bool prof = ds.axisDir == "X";
                 //find the field for this scan
                 Beam beam = null;
-                foreach(Beam b in ps.Beams)
+                foreach (Beam b in ps.Beams)
                 {
                     double x1 = b.ControlPoints.First().JawPositions.X1;
                     double x2 = b.ControlPoints.First().JawPositions.X2;
@@ -210,15 +211,20 @@ namespace Model_Validation
                     double y2 = b.ControlPoints.First().JawPositions.Y2;
                     double xjaw = Math.Abs(x1 - x2);
                     double yjaw = Math.Abs(y1 - y2);
-                    if(xjaw-ds.FieldX<0.1 && yjaw - ds.FieldY <0.1)
+                    if (xjaw - ds.FieldX < 0.1 && yjaw - ds.FieldY < 0.1)
                     {
                         beam = b;
-                        break;                     
+                        break;
                     }
                 }
                 if (beam != null)
                 {
-                    if(scan_num == ds_num){scan_found = true;}
+                    if (scan_num == ds_num)
+                    {
+                        scan_found = true;
+                        scan_tb.Text = $"Comparing Scan ({ds.FieldX}x{ds.FieldY})-({ds.depth}).";
+                        sc.Clear();
+                    }
                     //get dose profile
                     VVector start = new VVector();
                     start.x = prof ? ds.scan_data.First().Item1 : 0;
@@ -230,7 +236,7 @@ namespace Model_Validation
                     double[] size = new double[ds.scanLength];
                     DoseProfile dp = beam.Dose.GetDoseProfile(start, end, size);
                     double norm_factor = prof ? dp.First(o => o.Position.x >= 0).Value : dp.Max(o => o.Value);
-                    for(int i = 0; i < dp.Count(); i++)
+                    for (int i = 0; i < dp.Count(); i++)
                     {
                         sc.Add(new ScanCompare
                         {
@@ -245,8 +251,12 @@ namespace Model_Validation
                 }
                 ds_num++;
             }
-            if (!scan_found) { Status_tb.Text = "No matching scans/field pairs found."; }
+            if (!scan_found) { Status_tb.Text = "No matching scans/field pairs found."; return; }
+            scan_cnv.Children.Clear();
+            plot_scans(sc);
+
         }
+
 
         private double GetGamma(DataScan ds, DoseProfile dp, int i, double norm_factor, bool prof)
         {
@@ -255,9 +265,9 @@ namespace Model_Validation
             double ref_pos = ds.scan_data[i].Item1;
             double ref_dos = ds.scan_data[i].Item2;
             int start = (int)Math.Max(0, i - 10 * dta);
-            int stop = (int)Math.Min(ds.scan_data.Count()-1, i + 10 * dta);
+            int stop = (int)Math.Min(ds.scan_data.Count() - 1, i + 10 * dta);
             List<double> gamma_values = new List<double>();
-            for(double index = start; index < stop - 1; index += 0.1)
+            for (double index = start; index < stop - 1; index += 0.1)
             {
                 //y = y0 + (x-x0) * (y1-y0)/(x1-x0)
                 int x0 = (int)Math.Floor(index);
@@ -267,7 +277,8 @@ namespace Model_Validation
                 double yd0 = dp[x0].Value / norm_factor * 100;
                 double yd1 = dp[x1].Value / norm_factor * 100;
                 double dos = 0; double pos = 0;
-                if (x0 == x1) {
+                if (x0 == x1)
+                {
                     dos = yd0;
                     ref_pos = yp0;
                 }
@@ -282,14 +293,80 @@ namespace Model_Validation
             return gamma_values.Min();
         }
 
-        private void prev_btn_Click(object sender, RoutedEventArgs e)
+        private void plot_scans(List<ScanCompare> sc)
         {
 
+            // Calculate multipliers for scaling DVH to canvas.
+            //.DoseValuePresentation = DoseValuePresentation.Absolute;
+
+            double xCoeff = scan_cnv.ActualWidth / (sc.Max(o => o.measured_pos) * 2);
+            double yCoeff = scan_cnv.ActualHeight / (sc.Max(o => o.measured_dos));
+            double xCoeff_gamma = xCoeff;
+            double yCoeff_gamma = scan_cnv.ActualHeight / sc.Max(o => o.gamma);
+
+
+            // Set X axis label
+            //DoseMaxLabel.Content = string.Format("{0}", ps.Dose.DoseMax3D);
+            //plot(sc,y, scan_cnv,SolidColorBrush color,xCoeff,yCoeff)
+            // Draw histogram 
+            for (int i = 0; i < sc.Count() - 1; i++)
+            {
+                // Set drawing line parameters
+                var line1 = new Line() { Stroke = Brushes.Blue, StrokeThickness = 2.0 };
+
+                // Set line coordinates
+                line1.X1 = (sc[i].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+                line1.X2 = (sc[i + 1].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+
+                // Y axis start point is top-left corner of window, convert it to bottom-left.
+                line1.Y1 = scan_cnv.ActualHeight - sc[i].measured_dos * yCoeff;
+                line1.Y2 = scan_cnv.ActualHeight - sc[i + 1].measured_dos * yCoeff;
+
+                // Add line to the existing canvas
+                scan_cnv.Children.Add(line1);
+
+                // Set drawing line parameters
+                var line2 = new Line() { Stroke = Brushes.Red, StrokeThickness = 2.0 };
+
+                // Set line coordinates
+                line2.X1 = (sc[i].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+                line2.X2 = (sc[i + 1].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+
+                // Y axis start point is top-left corner of window, convert it to bottom-left.
+                line2.Y1 = scan_cnv.ActualHeight - sc[i].calc_dos * yCoeff;
+                line2.Y2 = scan_cnv.ActualHeight - sc[i + 1].calc_dos * yCoeff;
+
+                // Add line to the existing canvas
+                scan_cnv.Children.Add(line2);
+
+                // Set drawing line parameters
+
+                var line3 = new Line() { Stroke = Brushes.Green, StrokeThickness = 2.0 };
+                // Set line coordinates
+                line3.X1 = (sc[i].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+                line3.X2 = (sc[i + 1].calc_pos - sc.Min(o => o.measured_pos)) * xCoeff;
+
+                // Y] axis start point is top-left corner of window, convert it to bottom-left.
+                line3.Y1 = scan_cnv.ActualHeight - sc[i].gamma * yCoeff_gamma;
+                line3.Y2 = scan_cnv.ActualHeight - sc[i + 1].gamma * yCoeff_gamma;
+
+                // Add line to the existing canvas
+                scan_cnv.Children.Add(line3);
+            }
+
+
+        }
+        private void prev_btn_Click(object sender, RoutedEventArgs e)
+        {
+            scan_num = (scan_num - 1) % ds_list.Count();
+            compare_btn_Click(null, null);
         }
 
         private void next_btn_Click(object sender, RoutedEventArgs e)
         {
 
+            scan_num = (scan_num + 1) % ds_list.Count();
+            compare_btn_Click(null, null);
         }
     }
 }

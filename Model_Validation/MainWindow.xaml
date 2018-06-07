@@ -23,7 +23,7 @@
             <TextBlock Text="Patient ID:" Grid.Column="0" Grid.Row="0" FontSize="12" Margin="3"/>
             <TextBlock Text="Course:" Grid.Column="0" Grid.Row="1" FontSize="12" Margin="3"/>
             <TextBlock Text="Plan:" Grid.Column="2" Grid.Row="1" FontSize="12" Margin="3"/>
-            <TextBox Name="Pat_ID_tb" Grid.Column="1" Grid.Row="0" Width="120" FontSize="10" Margin="3"/>
+            <TextBox Name="Pat_ID_tb" Grid.Column="1" Grid.Row="0" Width="120" FontSize="10" Margin="3" Text="US-PH-001"/>
             <ComboBox Name="Course_cb" Grid.Column="1" Grid.Row="1" Width="120" FontSize="10" Margin="3" SelectionChanged="Course_cb_SelectionChanged"/>
             <ComboBox Name="Plan_cb" Grid.Column="3" Grid.Row="1" Width="120" FontSize="10" Margin="3" SelectionChanged="Plan_cb_SelectionChanged"/>
             <Button Name="Load_Pat_bn" Grid.Column="2" Grid.Row="0" Grid.ColumnSpan="2" Margin="3" Content="Load Patient" Click="Load_Pat_bn_Click" />
