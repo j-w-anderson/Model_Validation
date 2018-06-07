@@ -95,7 +95,7 @@ namespace Model_Validation
                 Regex newscan_re = new Regex("^\\$STOM");
                 Regex fieldsize_re = new Regex("^%FLSZ");
                 Regex scantype_re = new Regex("^%TYPE");
-                Regex pnts_re = new Regex("^%PNTS");
+               Regex pnts_re = new Regex("^%PNTS");
                 Regex step_re = new Regex("^%STEP");
                 Regex depth_re = new Regex("^%DPTH");
                 Regex data_re = new Regex("^<");
